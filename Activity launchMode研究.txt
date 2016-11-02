@@ -1,0 +1,10 @@
+﻿Activity launchMode研究
+1 standard 每次都新建一个实例添加到返回栈的顶部
+
+2 singleTop (Single In Current Task Top and Will not interact with other task) 只有当该Activity的实例位于栈顶端时，才会直接使用该实例，否则新建实例。所以在此模式下，栈顶不会有相同的此Activity的实例。
+  目标Activity如果存在顶端，则不新建直接使用，否则新建。
+
+3 singleTask （Single In The Task and only one task） 如果全局中有该Activity的实例，则将实例所在的栈中位于实例上方的所有其它Activity的实例全部出栈销毁，如果没有，则新建实例。在此模式下，该Activity只会有一个实例保存在当前栈里面，当前栈可以有其它Activity的实例。
+  目标Activity如果存在，则踢掉其它的Activity，直接使用。
+
+4 singleInstance （Single In The System and Only one Activity In The Task） 在此模式下，系统会为该Activity新建一个返回栈，并且保持该返回栈只有该Activity的一个实例，不会有其它Activity的实例。全系统只会有一个实例。

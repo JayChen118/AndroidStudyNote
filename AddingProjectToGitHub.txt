@@ -1,0 +1,15 @@
+1   在GitHub上创建一个资源库repository。
+2   打开Git Bash
+3   将当前工作目录改为你的本地项目目录
+4   初始化本地目录为Git 仓库
+    git init
+5   将目录中的文件添加到Git管理，准备初次提交。
+    git add .
+6   提交你本地仓库中已经准备好的文件。
+    git commit -m "First commit"
+7   在你的GitHub仓库的快速设置页面的顶点，点击拷贝图标负责远端仓库URL
+8   在命令行窗口输入你将会推送到的远端仓库URL地址
+    git remote add origin URL
+    git remote -v
+9   将本地的修改推送到GitHub
+    git push origin master

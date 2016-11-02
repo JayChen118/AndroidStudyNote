@@ -1,0 +1,15 @@
+﻿Activity根据android:taskAffinity来划分task栈。配合 FLAG_ACTIVITY_NEW_TASK 使用。
+
+FLAG_ACTIVITY_CLEAR_TOP 会清空task栈目标Activity及其上方的其它Activity，再新建目标Activity，配合 FLAG_ACTIVITY_SINGLE_TOP 将不会新建。效果同singleTask。
+
+FLAG_ACTIVITY_SINGLE_TOP 位于顶端就重用，否则新建，效果同singleTop。
+
+<activity>的android:allowTaskReparenting 是否允许Activity在退回到后台之后，返回它自身affinity相关的task。
+
+android:alwaysRetainTaskState 是否一致保持task栈的状态。
+
+android:clearTaskOnLaunch 在启动时清空task栈中的其它Activity。
+
+android:finishOnTaskLaunch 当启动task栈时，如果存在此Activity，则销毁。
+
+

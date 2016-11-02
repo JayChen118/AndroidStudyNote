@@ -1,0 +1,33 @@
+﻿onCreate()
+onStart()
+onResume()
+
+onPause()
+onStop() - onRestart() - onStart()
+onDestroy()
+
+1. 当Activity不在最前面的时候，onPause().
+2. onPause()或onStop()状态下，当内存不足时，进程被销毁，如果用户导航回来，onCreate().
+3. onPause()状态下，Activity返回最前面，onResume().
+4. onPause()状态下，Activity不可见，onStop().
+5. onStop()状态下，Activity返回到前台，onRestart().
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

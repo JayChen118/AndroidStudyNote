@@ -1,0 +1,3 @@
+﻿View的事件
+onTouch先于onClick。
+onTouch返回true时，不触发onClick

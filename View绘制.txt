@@ -1,0 +1,34 @@
+View是由LayoutInflater加载的。
+LayoutInflater由Context获得。
+inflate方法的参数是布局ID与父布局的实例
+使用Pull解析方法解析布局文件xml
+先加载根布局，递归加载子布局，循环加载同级布局
+attachToRoot默认为true，在root不为null时生效
+attachToRoot会影响到根布局的layout属性
+setContentView会包裹一层FrameLayout
+
+onMeasure方法开始测量视图大小。
+MeasureSpec由specSize与specMode组成。
+specSize是具体大小数值，specMode是指父视图希望子视图设置大小的规则。
+EXACTLY 指定大小
+AT_MOST 最大
+UNSPECIFIED 无指定
+MeasureSpec.getMode(measureSpec)与 MeasureSpec.getSize(measureSpec)获取
+measureChildren方法测量子视图，递归测量子视图
+重写onMeasure方法，调用setMeasuredDimension即可设置视图大小
+
+onLayout方法用于确定视图的位置，相对于父视图而言。
+onLayout在View中是空方法，在ViewGroup中是抽象方法，每个ViewGroup的子类都要实现。
+在onLayout中调用子视图的layout方法即可确定子视图的位置。
+首先getMeasureWidth()方法在measure()过程结束后就可以获取到了，而getWidth()方法要在layout()过程结束后才能获取到。
+另外，getMeasureWidth()方法中的值是通过setMeasuredDimension()方法来进行设置的，而getWidth()方法中的值则是通过视图右边的坐标减去左边的坐标计算出来的。
+
+onDraw方法中使用Canvas进行绘制
+draw()方法中会先绘制背景，绘制自身，再绘制子视图
+
+更改状态会触发重绘，手动触发可调用invalidate方法
+
+
+
+
+
