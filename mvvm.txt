@@ -1,0 +1,12 @@
+MVVM用于分离业务逻辑及UI，使两边的分工明确，便于测试。
+
+Model - View - ViewModel
+
+Model 负责业务逻辑及数据
+
+View UI绘制及逻辑
+
+ViewModel 展现层逻辑，与Model层交流获取数据，与View层交流更新UI
+
+
+
