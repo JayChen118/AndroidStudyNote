@@ -72,3 +72,27 @@ public class BasePresenter<T extends MvpView> implements MvpPresenter<T> {
     }
 }
 ```
+正如你在上面看到的，这个presenter定义了一个`CompositeSubscription`。这个对象将会保存一组RxJava的Subscription（订阅）。在`detachView()`方法中调用了`compositionSubscription.clear()`方法，这个方法将会取消所有的订阅，从而防止内存泄露和View造成的崩溃（当View被销毁，它就不会被订阅，相关的代码也不会运行）。当继承于这个类的presenter中有subscription被创建时，我们调用`addSubscription()`。
+
+3 . 创建一个`UserSearchContract`接口来表示View和Presenter之间的Contract（合约？交互关系？自己理解就好，翻译不出来了）。在这个接口中，分别为View和Presenter创建一个接口。
+```
+interface UserSearchContract {
+
+    interface View extends MvpView {
+        void showSearchResults(List<User> githubUserList);
+
+        void showError(String message);
+
+        void showLoading();
+
+        void hideLoading();
+    }
+
+    interface Presenter extends MvpPresenter<View> {
+        void search(String term);
+    }
+}
+```
+在View接口中，有个四个方法：`showSearchResults()`,`showError()`,`showLoading()`,`hideLoading()`。在Presenter中，只有一个`search()`方法。
+
+一个**Presenter**既不在意一个**View**如何去展示获得的数据，也不在意如何展示错误信息。相似的，一个**View**也不关心一个**Presenter**如何去搜索，只需要**Presenter**会调用回调方法，具体的实现无关紧要。
