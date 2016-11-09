@@ -1,0 +1,4 @@
+1 在Project的build.gradle添加依赖 classpath 'com.android.databinding:dataBinder:1.0-rc0'
+2 在module的build.gradle添加插件 apply plugin: 'com.android.databinding'
+
+
