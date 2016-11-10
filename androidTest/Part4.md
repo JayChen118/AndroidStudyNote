@@ -74,7 +74,7 @@ public class BasePresenter<T extends MvpView> implements MvpPresenter<T> {
 ```
 正如你在上面看到的，这个presenter定义了一个`CompositeSubscription`。这个对象将会保存一组RxJava的Subscription（订阅）。在`detachView()`方法中调用了`compositionSubscription.clear()`方法，这个方法将会取消所有的订阅，从而防止内存泄露和View造成的崩溃（当View被销毁，它就不会被订阅，相关的代码也不会运行）。当继承于这个类的presenter中有subscription被创建时，我们调用`addSubscription()`。
 
-3 . 创建一个`UserSearchContract`接口来表示View和Presenter之间的Contract（合约？交互关系？自己理解就好，翻译不出来了）。在这个接口中，分别为View和Presenter创建一个接口。
+3 . 创建一个`UserSearchContract`接口来表示View和Presenter之间的Contract（约定？交互关系？自己理解就好，翻译不出来了）。在这个接口中，分别为View和Presenter创建一个接口。
 ```
 interface UserSearchContract {
 
@@ -96,3 +96,26 @@ interface UserSearchContract {
 在View接口中，有个四个方法：`showSearchResults()`,`showError()`,`showLoading()`,`hideLoading()`。在Presenter中，只有一个`search()`方法。
 
 一个**Presenter**既不在意一个**View**如何去展示获得的数据，也不在意如何展示错误信息。相似的，一个**View**也不关心一个**Presenter**如何去搜索，只需要**Presenter**会调用回调方法，具体的实现无关紧要。
+
+分离View和Presenter之间的逻辑是件简单的事。从如何将Presenter重用到另一种类型的UI的角度考虑，你就会明白代码应该放到哪里。例如，当你必须使用Java Swing作为UI实现工具，你的Presenter可以保持不变的话，就仅仅需要改变你的View实现了。这意味着当你考虑逻辑代码应该放在哪里时，仅仅需要问自己：当我有了另一套不同的UI时，Presenter里面的逻辑还有意义吗？
+
+4 . 现在我们已经定义好View跟Presenter之间的约定。创建或导航到`UserSearchPresenter`。在这里，我们添加对`UserRepository`的订阅，这就是我们调用Github API的地方。
+```
+class UserSearchPresenter extends BasePresenter<UserSearchContract.View> implements UserSearchContract.Presenter {
+    private final Scheduler mainScheduler, ioScheduler;
+    private UserRepository userRepository;
+
+    UserSearchPresenter(UserRepository userRepository, Scheduler ioScheduler, Scheduler mainScheduler) {
+        this.userRepository = userRepository;
+        this.ioScheduler = ioScheduler;
+        this.mainScheduler = mainScheduler;
+    }
+
+    @Override
+    public void search(String term) {
+
+    }
+}
+```
+这个Presenter继承了`BasePresenter`并且实现了第3步定义的`UserSearchContract.Presenter`接口。我们将在这个类里面实现`Search()`方法的具体逻辑（先放一个空方法）。
+
