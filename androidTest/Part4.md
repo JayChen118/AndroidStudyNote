@@ -28,6 +28,7 @@ public interface MvpPresenter<V extends MvpView> {
     void detachView();
 }
 ```
+
 2 . 创建一个`BasePresenter`。在这个类中，我们检查当前的Presenter是否已经依附了一个View，并提供管理RxJava订阅者的方法。
 ```
 public class BasePresenter<T extends MvpView> implements MvpPresenter<T> {
@@ -118,4 +119,88 @@ class UserSearchPresenter extends BasePresenter<UserSearchContract.View> impleme
 }
 ```
 这个Presenter继承了`BasePresenter`并且实现了第3步定义的`UserSearchContract.Presenter`接口。我们将在这个类里面实现`Search()`方法的具体逻辑（先放一个空方法）。
+
+使用[Constructor injection](https://en.wikipedia.org/wiki/Dependency_injection#Constructor_injection)（构造注入？）可以在需要做单元测试时轻松地仿造(mock) UserRepository。两个Scheduler也是通过构造器注入，在单元测试时，我们会一直用`Schedulers.immediate()`（即立即执行的策略），而在View层调用时，我们会使用不同的线程（即一个主线程，一个IO线程）。
+
+5 . 以下是`search()`的实现：
+```
+    @Override
+    public void search(String term) {
+        checkViewAttached();
+        getView().showLoading();
+        addSubscription(userRepository.searchUsers(term).subscribeOn(ioScheduler).observeOn(mainScheduler).subscribe(new Subscriber<List<User>>() {
+            @Override
+            public void onCompleted() {
+
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                getView().hideLoading();
+                getView().showError(e.getMessage()); //TODO You probably don't want this error to show to users - Might want to show a friendlier message :)
+            }
+
+            @Override
+            public void onNext(List<User> users) {
+                getView().hideLoading();
+                getView().showSearchResults(users);
+            }
+        }));
+    }
+```
+
+首先，调用`checkViewAttached()`，如果当前没有View依附在Presenter上的话，会抛出异常。接着通过调用`showLoading()`告诉View，它应该开始加载了。给`userRepository.searchUsers()`创建一个Subscription（订阅）。设置`subscribeOn()`的参数为`ioScheduler`，因为我们希望网络调用发生在IO线程上。设置`observeOn()`的参数为`mainScheduler`，因为我们希望这个Subscription的结果可以在主线程观察到（应该是在主线程运行的意思）。最后通过调用`addSubscription()`，将Subscription添加到我们的Subscription组里面。
+
+在`onNext()`里面，通过调用`hideLoading()`和`showSearchResults()`方法处理API返回的用户列表。在`onError()`里面，停止加载并调用`showError()`显示错误信息。
+
+以下是`UserSearchPresenter`的全部代码：
+```
+package za.co.riggaroo.gus.presentation.search;
+
+
+import java.util.List;
+
+import rx.Scheduler;
+import rx.Subscriber;
+import za.co.riggaroo.gus.data.UserRepository;
+import za.co.riggaroo.gus.data.remote.model.User;
+import za.co.riggaroo.gus.presentation.base.BasePresenter;
+
+class UserSearchPresenter extends BasePresenter<UserSearchContract.View> implements UserSearchContract.Presenter {
+    private final Scheduler mainScheduler, ioScheduler;
+    private UserRepository userRepository;
+
+    UserSearchPresenter(UserRepository userRepository, Scheduler ioScheduler, Scheduler mainScheduler) {
+        this.userRepository = userRepository;
+        this.ioScheduler = ioScheduler;
+        this.mainScheduler = mainScheduler;
+    }
+
+    @Override
+    public void search(String term) {
+        checkViewAttached();
+        getView().showLoading();
+        addSubscription(userRepository.searchUsers(term).subscribeOn(ioScheduler).observeOn(mainScheduler).subscribe(new Subscriber<List<User>>() {
+            @Override
+            public void onCompleted() {
+
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                getView().hideLoading();
+                getView().showError(e.getMessage()); //TODO You probably don't want this error to show to users - Might want to show a friendlier message :)
+            }
+
+            @Override
+            public void onNext(List<User> users) {
+                getView().hideLoading();
+                getView().showSearchResults(users);
+            }
+        }));
+    }
+}
+```
+
+
 
