@@ -16,7 +16,7 @@ https://github.com/riggaroo/GithubUsersSearchApp。
 
 创建Presenter
 -----------
-1 . 首先，在`za.co.riggaroo.gus.presentation.base`包中创建基本接口`MvpVIew`和`MvpPresenter`。所有的MVP功能类都将继承这两个接口。
+1 . 首先，在`za.co.riggaroo.gus.presentation.base`包中创建基本接口`MvpView`和`MvpPresenter`。所有的MVP功能类都将继承这两个接口。
 ```
 public interface MvpView {
 }
@@ -203,4 +203,108 @@ class UserSearchPresenter extends BasePresenter<UserSearchContract.View> impleme
 ```
 
 
+为 UserSearchPresenter 编写单元测试
+----------------------------
 
+现在我们已经定义好presenter了，开始为它写一些单元测试吧！
+
+1 . 选中`UserSearchPresenter`的类名，按下“ALT + Enter”键，选中“Create Test”。选择“app/src/**test**/java”目录，因为这是不需要Android依赖的单元测试。测试代码的最终存放路径为:`app/src/test/java/za/co/riggaroo/gus/presentation/search`。
+
+2 . 在`UserSearchPresenterTest`里面，创建setup方法以及定义我们在测试中需要用到的变量。
+```
+public class UserSearchPresenterTest {
+
+    @Mock
+    UserRepository userRepository;
+    @Mock
+    UserSearchContract.View view;
+
+    UserSearchPresenter userSearchPresenter;
+
+    @Before
+    public void setUp() throws Exception {
+        MockitoAnnotations.initMocks(this);
+        userSearchPresenter = new UserSearchPresenter(userRepository, Schedulers.immediate(), Schedulers.immediate());
+        userSearchPresenter.attachView(view);
+    }
+}
+```
+
+通过仿造 `UserRepository` 和 `UserSearchContract.View` ，我们可以确保只测试 `UserSearchPresenter` 。在`setup()`方法中，我们调用`MockitoAnnotations.initMocks()`来初始化仿造的变量。接着用仿造的对象和即时计划（immediate schedules）创建presenter。调用`attachView()`将仿造的View依附到Presenter上面。
+
+3 . 第一个测试的目标是一个有效的查询条件会有正确的回调：
+```
+    private static final String USER_LOGIN_RIGGAROO = "riggaroo";
+    private static final String USER_LOGIN_2_REBECCA = "rebecca";
+   
+    @Test
+    public void search_ValidSearchTerm_ReturnsResults() {
+        UsersList userList = getDummyUserList();
+        when(userRepository.searchUsers(anyString())).thenReturn(Observable.<List<User>>just(userList.getItems()));
+
+        userSearchPresenter.search("riggaroo");
+
+        verify(view).showLoading();
+        verify(view).hideLoading();
+        verify(view).showSearchResults(userList.getItems());
+        verify(view, never()).showError(anyString());
+    }
+
+    UsersList getDummyUserList() {
+        List<User> githubUsers = new ArrayList<>();
+        githubUsers.add(user1FullDetails());
+        githubUsers.add(user2FullDetails());
+        return new UsersList(githubUsers);
+    }
+
+    User user1FullDetails() {
+        return new User(USER_LOGIN_RIGGAROO, "Rigs Franks", "avatar_url", "Bio1");
+    }
+
+    User user2FullDetails() {
+        return new User(USER_LOGIN_2_REBECCA, "Rebecca Franks", "avatar_url2", "Bio2");
+    }
+```
+
+这个测试断定：**设定** user repository 会返回一组用户，**当**在presenter上调用 `search()`，**最后**View的 `showLoading()`，`hideLoading()` 和`showSearchResult()`被调用。这个测试也断定`showError()`方法不会被调用。
+
+4 . 第二个测试的目标是当UserRepository抛出异常后会出现错误页面：
+```
+    @Test
+    public void search_UserRepositoryError_ErrorMsg() {
+        String errorMsg = "No internet";
+        when(userRepository.searchUsers(anyString())).thenReturn(Observable.error(new IOException(errorMsg)));
+
+        userSearchPresenter.search("bookdash");
+
+        verify(view).showLoading();
+        verify(view).hideLoading();
+        verify(view, never()).showSearchResults(anyList());
+        verify(view).showError(errorMsg);
+    }
+```
+
+这个测试是这样进行的：**设定** userRepository 会返回一个异常，**当**调用 `search()`时，**最后**会调用`showError()`。
+
+5 . 最后的测试的目标是在没有View依附时，会抛出异常：
+```
+    @Test(expected = BasePresenter.MvpViewNotAttachedException.class)
+    public void search_NotAttached_ThrowsMvpException() {
+        userSearchPresenter.detachView();
+
+        userSearchPresenter.search("test");
+
+        verify(view, never()).showLoading();
+        verify(view, never()).showSearchResults(anyList());
+    }
+```
+
+译者注：如果MvpViewNotAttachedException报错，将访问限制改为public。
+
+6 . 让我们运行这些测试吧！看看我们能有多少覆盖率。右键点击测试类名，选择“Run tests with coverage”。
+
+![test_result](http://img.blog.csdn.net/20161113133303160)
+
+Yay！我们获得了100%的覆盖率。
+
+下一篇博客将会涉及创建UI并编写UI测试。
