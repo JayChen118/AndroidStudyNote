@@ -1,1 +1,1 @@
-git branch --set-upstream-to my_branch origin/my_branch
+git branch -u origin/my_branch
