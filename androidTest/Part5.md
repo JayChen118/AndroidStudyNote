@@ -83,7 +83,9 @@ public class UserSearchActivity extends AppCompatActivity implements UserSearchC
     }
 }
 ```
-在`onCreate()`中，创建presenter对象。将Injection类定义的User Repo作为第一个参数。（译者注：有跟我一样喜欢即时拷代码进项目看的朋友吗？我就当有了，我把原文的Injection代码提前到下面。）
+在`onCreate()`中，创建presenter对象。将Injection类定义的User Repo作为第一个参数。（译者注：有跟我一样喜欢即时拷代码进项目看的朋友吗？我就当有了，我把原文的Injection代码提前到下面。）传递`ios()`和`AndroidSchedulers.mainThread()`计划进构造器，这样RxJava的Subscription就知道应该在哪条线程上面执行自己的代码了。
+
+在下一行，你可以看到我调用`userSearchPresenter.attachView(this)`。这个操作将View依附到Presenter，这样Presenter就可以将变动通知给View。因为Presenter并不会自动与Activity的生命周期联动，所以在`onDestroy()`中我们需要通知Presenter这时View已经不存在了，具体做法是调用`userSearchPresenter.detachView()`。这样就可以注销RxJava的所有订阅并防止内存泄露。
 ```
 public class Injection {
 
@@ -127,13 +129,94 @@ public class Injection {
 }
 ```
 
+2 . 在layout文件夹创建`activity_user_search.xml`。这个文件将会包含一个`RecyclerView`，一个`ProgressBar`，一个错误`TextView`和一个`Toolbar`。我准备使用`ConstraintLayout`来设计我的屏幕，所以我不会很详细地述说细节，因为大部分操作都是拖和放。（如果你想要知道更多ConstraintLayout的信息，你可以打开我的 [另一篇博客](https://riggaroo.co.za/constraintlayout-101-new-layout-builder-android-studio/) 。）
 
+![UserSearchActivity](http://img.blog.csdn.net/20161127155428137)
 
+activity_user_search.xml
+```
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activity_user_search"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="za.co.riggaroo.gus.presentation.search.UserSearchActivity">
 
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="?attr/colorPrimary"
+        android:minHeight="?attr/actionBarSize"
+        android:theme="?attr/actionBarTheme"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintLeft_toLeftOf="@+id/activity_user_search"
+        app:layout_constraintRight_toRightOf="@+id/activity_user_search"
+        app:layout_constraintTop_toTopOf="@+id/activity_user_search">
 
+    </android.support.v7.widget.Toolbar>
 
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/recycler_view_users"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginBottom="16dp"
+        android:clipToPadding="false"
+        android:scrollbars="vertical"
+        app:layoutManager="android.support.v7.widget.LinearLayoutManager"
+        app:layout_constraintBottom_toBottomOf="@+id/activity_user_search"
+        app:layout_constraintLeft_toLeftOf="@+id/activity_user_search"
+        app:layout_constraintRight_toRightOf="@+id/activity_user_search"
+        app:layout_constraintTop_toBottomOf="@+id/toolbar"
+        tools:listitem="@layout/list_item_user">
 
+    </android.support.v7.widget.RecyclerView>
 
+    <TextView
+        android:id="@+id/text_view_error_msg"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="@string/search_for_some_users"
+        android:visibility="visible"
+        app:layout_constraintBottom_toBottomOf="@+id/recycler_view_users"
+        app:layout_constraintLeft_toLeftOf="@+id/toolbar"
+        app:layout_constraintRight_toRightOf="@+id/recycler_view_users"
+        app:layout_constraintTop_toBottomOf="@+id/toolbar"
+        tools:text="No Data has loaded"/>
+
+    <ProgressBar
+        android:id="@+id/progress_bar"
+        style="@style/Widget.AppCompat.ProgressBar"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_marginBottom="16dp"
+        android:layout_marginTop="16dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@+id/activity_user_search"
+        app:layout_constraintLeft_toLeftOf="@+id/recycler_view_users"
+        app:layout_constraintRight_toRightOf="@+id/recycler_view_users"
+        app:layout_constraintTop_toBottomOf="@+id/toolbar"
+        tools:visibility="visible"/>
+
+</android.support.constraint.ConstraintLayout>
+```
+
+strings.xml
+```
+<resources>
+    <string name="app_name">Gus</string>
+    <string name="search_users">Search for users on Github...</string>
+    <string name="search_icon_title">Search</string>
+    <string name="search_for_some_users">Start typing to search</string>
+</resources>
+
+```
+
+3 . 我们还需要添加一个SearchView到ToolBar，这样我们就有地方键入搜索词。
 
 
 
