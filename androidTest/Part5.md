@@ -216,35 +216,286 @@ strings.xml
 
 ```
 
-3 . 我们还需要添加一个SearchView到ToolBar，这样我们就有地方键入搜索词。
+3 . 我们还需要添加一个SearchView到ToolBar，这样我们就有地方键入搜索词。添加一个`menu_user_search.xml`文件到menu资源文件夹，在文件里面，我们添加一个`SearchView`：
+menu_user_search.xml
+```
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/menu_search"
+        android:icon="@drawable/ic_search"
+        android:title="@string/search_icon_title"
+        app:actionViewClass="android.support.v7.widget.SearchView"
+        app:showAsAction="always|collapseActionView" />
+</menu>
+```
+添加一个`ic_search.xml`文件到drawable文件夹：
+```
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportHeight="24.0"
+    android:viewportWidth="24.0">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M15.5,14h-0.79l-0.28,-0.27C15.41,12.59 16,11.11 16,9.5 16,5.91 13.09,3 9.5,3S3,5.91 3,9.5 5.91,16 9.5,16c1.61,0 3.09,-0.59 4.23,-1.57l0.27,0.28v0.79l5,4.99L20.49,19l-4.99,-5zM9.5,14C7.01,14 5,11.99 5,9.5S7.01,5 9.5,5 14,7.01 14,9.5 11.99,14 9.5,14z" />
+</vector>
+
+```
+
+4 . 我们需要为RecyclerView的每一个项创建一个layout。新建一个`list_item_user.xml`文件。我使用ConstraintLayout，包含一个显示头像的ImageView和两个TextView。
+
+![List_item_user_designmode](http://img.blog.csdn.net/20161129165818478)
+
+```
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/constraintLayout"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <ImageView
+        android:id="@+id/imageview_userprofilepic"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        app:layout_constraintLeft_toLeftOf="@+id/constraintLayout"
+        app:layout_constraintTop_toTopOf="@+id/constraintLayout"
+        app:srcCompat="@mipmap/ic_launcher" />
+
+    <TextView
+        android:id="@+id/textview_username"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="16dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+        app:layout_constraintLeft_toRightOf="@+id/imageview_userprofilepic"
+        app:layout_constraintTop_toTopOf="@+id/constraintLayout"
+        tools:text="Rebecca Franks" />
+
+    <TextView
+        android:id="@+id/textview_user_profile_info"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginStart="16dp"
+        android:textAppearance="@style/TextAppearance.AppCompat.Caption"
+        app:layout_constraintBottom_toBottomOf="@+id/constraintLayout"
+        app:layout_constraintLeft_toRightOf="@+id/imageview_userprofilepic"
+        app:layout_constraintRight_toRightOf="@+id/constraintLayout"
+        app:layout_constraintTop_toBottomOf="@+id/textview_username"
+        tools:text="JHB, South Africa. Lots of code, lots and lots and lots of code." />
+</android.support.constraint.ConstraintLayout>
+```
+
+5 . 现在我们已经有了所有需要的layout，让我们把它们绑定到Activity吧。首先，在`onCreate()`方法获取View的引用。
+```
+    private UsersAdapter usersAdapter;
+    private SearchView searchView;
+    private Toolbar toolbar;
+    private ProgressBar progressBar;
+    private RecyclerView recyclerViewUsers;
+    private TextView textViewErrorMessage;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        ...
+
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        progressBar = (ProgressBar) findViewById(R.id.progress_bar);
+        textViewErrorMessage = (TextView) findViewById(R.id.text_view_error_msg);
+        recyclerViewUsers = (RecyclerView) findViewById(R.id.recycler_view_users);
+        usersAdapter = new UsersAdapter(null, this);
+        recyclerViewUsers.setAdapter(usersAdapter);
+
+    }
+```
+
+添加RecyclerView的依赖，版本与compileSdkVersion匹配就好
+```
+    compile 'com.android.support:recyclerview-v7:25.0.1'
+```
+
+添加UsersAdapter，用于RecyclerView。
+```
+
+public class UsersAdapter extends RecyclerView.Adapter<UserViewHolder> {
+    private final Context context;
+    private List<User> items;
+
+    UsersAdapter(List<User> items, Context context) {
+        this.items = items;
+        this.context = context;
+    }
+
+    @Override
+    public UserViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.list_item_user, parent, false);
+        return new UserViewHolder(v);
+    }
+
+    @Override
+    public void onBindViewHolder(UserViewHolder holder, int position) {
+        User item = items.get(position);
+
+        holder.textViewBio.setText(item.getBio());
+        if (item.getName() != null) {
+            holder.textViewName.setText(item.getLogin() + " - " + item.getName());
+        } else {
+            holder.textViewName.setText(item.getLogin());
+        }
+        Picasso.with(context).load(item.getAvatarUrl()).into(holder.imageViewAvatar);
+    }
+
+    @Override
+    public int getItemCount() {
+        if (items == null) {
+            return 0;
+        }
+        return items.size();
+    }
+
+    void setItems(List<User> githubUserList) {
+        this.items = githubUserList;
+        notifyDataSetChanged();
+    }
+}
 
 
+class UserViewHolder extends RecyclerView.ViewHolder {
+    final TextView textViewBio;
+    final TextView textViewName;
+    final ImageView imageViewAvatar;
 
+    UserViewHolder(View v) {
+        super(v);
+        imageViewAvatar = (ImageView) v.findViewById(R.id.imageview_userprofilepic);
+        textViewName = (TextView) v.findViewById(R.id.textview_username);
+        textViewBio = (TextView) v.findViewById(R.id.textview_user_profile_info);
+    }
+}
+```
 
+6 . 我们需要将SearchView勾到Activity里面并让它触发presenter的`search()`方法。在`onCreateOptionsMenu()`里面，加上以下代码：
+```
+@Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        super.onCreateOptionsMenu(menu);
+        getMenuInflater().inflate(R.menu.menu_user_search, menu);
+        final MenuItem searchActionMenuItem = menu.findItem(R.id.menu_search);
+        searchView = (SearchView) searchActionMenuItem.getActionView();
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                if (!searchView.isIconified()) {
+                    searchView.setIconified(true);
+                }
+                userSearchPresenter.search(query);
+                toolbar.setTitle(query);
+                searchActionMenuItem.collapseActionView();
+                return false; 
+            }
 
+            @Override
+            public boolean onQueryTextChange(String s) {
+                return false;
+            }
+        });
+        searchActionMenuItem.expandActionView();
+        return true;
+    }
+```
+这段代码将会填充正确的菜单，找到搜索视图并设置一个文本查询监听器。在这种情形下，只有当用户点击键盘上的提交按钮，我们才会做出反应，调用presenter的搜索方法。我们也可以在`onQueryTextChange`方法里面做这件事，不过考虑到Github API的调用频率限制，我还是建议用`onQueryTextSubmit`。正常情况下，搜索结果将会展现。
 
+7 . 接下来，我们实现presenter将会在数据加载完成后调用的回调。
+```
+    @Override
+    public void showSearchResults(List<User> githubUserList) {
+        recyclerViewUsers.setVisibility(View.VISIBLE);
+        textViewErrorMessage.setVisibility(View.GONE);
+        usersAdapter.setItems(githubUserList);
+    }
 
+    @Override
+    public void showError(String message) {
+        textViewErrorMessage.setVisibility(View.VISIBLE);
+        recyclerViewUsers.setVisibility(View.GONE);
+        textViewErrorMessage.setText(message);
+    }
 
+    @Override
+    public void showLoading() {
+        progressBar.setVisibility(View.VISIBLE);
+        recyclerViewUsers.setVisibility(View.GONE);
+        textViewErrorMessage.setVisibility(View.GONE);
+    }
 
+    @Override
+    public void hideLoading() {
+        progressBar.setVisibility(View.GONE);
+        recyclerViewUsers.setVisibility(View.VISIBLE);
+        textViewErrorMessage.setVisibility(View.GONE);
 
+    }
+```
+我们基本上只是反转视图的可见性并给`userAdapter`设置网络服务返回的新数据。
 
+译者注：如果遇到Toolbar相关的报错`This Activity already has an action bar supplied by the window decor. Do not request Window.FEATURE_SUPPORT_ACTION_BAR and set windowActionBar to false in your theme to use a Toolbar instead.`，应该是Theme的设置没有关闭默认的action bar。Theme的代码如下：
+```
+<resources>
 
+    <!-- Base application theme. -->
+    <style name="MyTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
 
+</resources>
+```
+译者注：记得添加网络访问权限
+```
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="za.co.riggaroo.gus">
 
+    <uses-permission android:name="android.permission.INTERNET" />
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/MyTheme">
 
+        <activity android:name=".presentation.search.UserSearchActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
 
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
 
+</manifest>
+```
 
+8 . 现在你可以跑一下这个App了。你应该可以搜索一个Github的用户名并看到结果。
+![github_user_search](http://img.blog.csdn.net/20161130151623382)
 
-
-
-
-
-
-
-
-
-
-
+Yay！我们有了一个能工作的App了。这篇博客的代码可以在 [这里](https://github.com/riggaroo/GithubUsersSearchApp/tree/testing-tutorial-part5-complete) 找到。在下一篇，我们将会介绍如何编写UI的测试。
 
 
