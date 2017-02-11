@@ -1,0 +1,21 @@
+1. 打开Android Device Monitor的File Explorer
+
+Android Studio Tools -> Android -> Android Device Monitor
+
+如果遇到7.0版本模拟器导致File Explorer空白，用本项目attachment文件夹下的ddmlib.jar包替换SDK中的
+地址：SDK\tools\lib\monitor-x86_64\configuration\org.eclipse.osgi\bundles\2\1\.cp\libs
+
+2. adb 命令 （位置：SDK\platform-tools）
+
+  adb push <local>... <remote>
+                               - copy files/dirs to device
+  Example: adb push test.mp4 /sdcard/
+  PS: sdcard实际地址为：/storage/emulated/0/
+
+  adb pull [-a] <remote>... <local>
+                               - copy files/dirs from device
+                                 (-a preserves file timestamp and mode)
+
+  Example: adb pull /sdcard/test.mp4 test.mp4
+
+
