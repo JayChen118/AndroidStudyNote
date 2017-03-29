@@ -1,1 +1,2 @@
 git branch -u origin/my_branch
+设置upstream
