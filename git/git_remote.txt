@@ -1,0 +1,3 @@
+
+git remote update origin --prune
+刷新Android Studio的remote branches列表
