@@ -1,2 +1,4 @@
-git branch -u origin/my_branch
+git branch -u origin/my_branch 
+or
+git branch --set-upstream-to origin/my_branch
 设置upstream
